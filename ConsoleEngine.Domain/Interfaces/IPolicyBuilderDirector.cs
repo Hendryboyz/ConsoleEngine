@@ -6,6 +6,6 @@ namespace ConsoleEngine.Domain.Interfaces
     {
         IPolicyBuilder Builder { get; }
 
-        IPolicyFacade Construct(Action action);
+        IPolicyFacade Construct();
     }
 }

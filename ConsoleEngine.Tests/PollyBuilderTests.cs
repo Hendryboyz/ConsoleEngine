@@ -2,6 +2,7 @@ using ConsoleEngine.Business;
 using ConsoleEngine.Domain.Interfaces;
 using NUnit.Framework;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Tests
@@ -10,100 +11,140 @@ namespace Tests
     public class PollyBuilderTests
     {
         private IPolicyBuilder pollyBuilder;
+        private StringWriter outputWriter;
 
         [SetUp]
         public void Setup()
         {
             pollyBuilder = new PollyBuilder();
-            pollyBuilder.SetFallbackPolicy(() =>
-            {
-                Console.WriteLine("over");
+            SetUpOutputWriter();
+        }
+
+        private void SetUpOutputWriter()
+        {
+            outputWriter = new StringWriter();
+            Console.SetOut(outputWriter);
+        }
+
+        [Test]
+        public void GivenDefaultPolicyAndAction_WhenBuildAndExecute_ThenDoneActionOutput()
+        {
+            IPolicyFacade pollyFacade = pollyBuilder.Build();
+
+            pollyFacade.Execute(() => { Console.WriteLine("Done"); });
+
+            StringAssert.Contains("Done", outputWriter.ToString());
+        }
+
+        [Test]
+        public void GivenFallbackAndAction_WhenBuildAndExecute_ThenDoneInOutput()
+        {
+            pollyBuilder.SetFallbackPolicy(() => {
+                Console.WriteLine("Some happened");
             });
-        }
 
+            IPolicyFacade pollyFacade = pollyBuilder.Build();
 
-        [Test]
-        public void GivenDefaultPolicy_WhenBuild_ThenDone()
-        {
-            pollyBuilder
-                .Build(() => { Console.WriteLine("Done"); });
-        }
+            pollyFacade.Execute(() => { Console.WriteLine("Done"); });
 
-        [Test]
-        public void GivenDefaultPolicy_WhenBuild_ThenFallbackPolicy()
-        {
-            pollyBuilder
-                .Build(() => { throw new Exception(); });
+            StringAssert.Contains("Done", outputWriter.ToString());
         }
 
         [Test]
-        public void GivenTimeoutPolicy_WhenBuild_ThenCheckLog()
+        public void GivenFallbackAndExceptionAction_WhenBuildAndExecute_ThenFallbackMessageInOutput()
         {
-            pollyBuilder
-                .SetTimeoutPolicy(1, onTimeout: OnTimeout())
-                .Build(() => { while (true) { } });
+            pollyBuilder.SetFallbackPolicy(() => {
+                Console.WriteLine("Some happened");
+            });
+
+            IPolicyFacade pollyFacade = pollyBuilder.Build();
+
+            pollyFacade.Execute(() => { throw new Exception(); });
+
+            StringAssert.Contains("Some happened", outputWriter.ToString());
+        }
+
+        [Test]
+        public void GivenTimeoutAndAction_WhenBuildAndExecute_ThenTimeoutMessageInOutput()
+        {
+            IPolicyFacade pollyFacade = pollyBuilder
+               .SetTimeoutPolicy(1, onTimeout: OnTimeout()).Build();
+
+            pollyFacade.Execute(() => { while (true) { } });
+
+            StringAssert.Contains("Timeout", outputWriter.ToString());
         }
 
         private Action<TimeSpan, Task, Exception> OnTimeout()
         {
             return (timespan, task, exception) =>
             {
-                Console.WriteLine("WriteMemcached Timeout");
+                Console.WriteLine("Timeout");
             };
         }
 
         [Test]
-        public void GivenRetry_WhenBuild_ThenCheckLog()
+        public void GivenRetryAndExceptionAction_WhenBuildAndExecute_ThenRetryMessageInOutput()
         {
-            pollyBuilder
-                .SetRetryPolicy(2, OnRetry())
-                .Build(() => { throw new Exception(); });
+            IPolicyFacade pollyFacade = pollyBuilder
+               .SetRetryPolicy(1, 1, onRetry: OnRetry()).Build();
+
+            pollyFacade.Execute(() => { throw new Exception(); });
+
+            StringAssert.Contains("times retry", outputWriter.ToString());
         }
 
-        private Action<Exception, int> OnRetry()
+        private Action<Exception, TimeSpan, int> OnRetry()
         {
-            return (exception, retryCount) =>
+            return (exception, timespan, retryCount) =>
             {
                 Console.WriteLine($"{retryCount} times retry");
             };
         }
 
         [Test]
-        public void GivenBreakerRetry_WhenBuild_ThenCheckLog()
+        public void GivenBreakerRetryAndExceptionAction_WhenBuildAndExecute_ThenBreakerRetryMessageInOutput()
         {
-            pollyBuilder
+            IPolicyFacade pollyFacade = pollyBuilder
                 .SetCircuitBreakerPolicy(3, TimeSpan.FromMilliseconds(1000), OnBreak(), OnReset())
-                .SetRetryPolicy(2, OnRetry())
-                .Build(() => { throw new Exception(); });
+                .SetRetryPolicy(2, 1, OnRetry()).Build();
+
+            pollyFacade.Execute(() => { throw new Exception(); });
+
+            StringAssert.Contains("times retry", outputWriter.ToString());
+            StringAssert.Contains("Break", outputWriter.ToString());
         }
 
         private Action OnReset()
         {
-            return () =>
-            {
-                Console.WriteLine("Reset it");
-            };
+            return () => { Console.WriteLine("Reset"); };
         }
 
         private Action<Exception, TimeSpan> OnBreak()
         {
             return (exception, timespan) =>
             {
-                Console.WriteLine("Break this");
+                Console.WriteLine("Break");
             };
         }
 
         [Test]
-        public void GivenBreakerRetryTimeout_WhenBuild_ThenCheckLog()
+        public void GivenAllPolicyAndOutput_WhenBuild_ThenCheckLog()
         {
-            pollyBuilder
-                .SetRetryPolicy(2, OnRetry())
+            IPolicyFacade pollyFacade = pollyBuilder
+                .SetRetryPolicy(2, 1, OnRetry())
                 .SetCircuitBreakerPolicy(3, TimeSpan.FromMilliseconds(1000), OnBreak(), OnReset())
-                .SetTimeoutPolicy(1, onTimeout: OnTimeout())
-                .Build(() => {
-                    Console.WriteLine("do it");
+                .SetTimeoutPolicy(1, onTimeout: OnTimeout()).Build();
+
+            pollyFacade.Execute(() => { 
+                    Console.WriteLine("Do");
                     while (true) { }
-                });
+            });
+
+            StringAssert.Contains("Do", outputWriter.ToString());
+            StringAssert.Contains("Timeout", outputWriter.ToString());
+            StringAssert.Contains("times retry", outputWriter.ToString());
+            StringAssert.Contains("Break", outputWriter.ToString());
         }
     }
 }

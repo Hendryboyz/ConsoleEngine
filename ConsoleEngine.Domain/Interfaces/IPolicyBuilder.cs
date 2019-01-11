@@ -5,7 +5,7 @@ namespace ConsoleEngine.Domain.Interfaces
 {
     public interface IPolicyBuilder
     {
-        IPolicyFacade Build(Action action);
+        IPolicyFacade Build();
 
         IPolicyBuilder SetTimeoutPolicy(int seconds, Action<TimeSpan, Task, Exception> onTimeout);
 
@@ -13,6 +13,6 @@ namespace ConsoleEngine.Domain.Interfaces
 
         IPolicyBuilder SetCircuitBreakerPolicy(int exceptionsAllowedBeforeBreaking, TimeSpan durationOfBreak, Action<Exception, TimeSpan> onBreak, Action onReset);
 
-        IPolicyBuilder SetRetryPolicy(int retryCount, Action<Exception, int> onRetry);
+        IPolicyBuilder SetRetryPolicy(int retryCount, int sleepMilliseconds, Action<Exception, TimeSpan, int> onRetry);
     }
 }

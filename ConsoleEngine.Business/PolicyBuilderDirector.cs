@@ -13,18 +13,18 @@ namespace ConsoleEngine.Business
 
         }
 
-        public IPolicyFacade Construct(Action action)
+        public IPolicyFacade Construct()
         {
             return Builder
-               .SetRetryPolicy(2, OnRetry())
+               .SetRetryPolicy(2, 1, OnRetry())
                .SetTimeoutPolicy(1, onTimeout: OnTimeout())
-               .Build(action);
+               .Build();
         }
 
 
-        private Action<Exception, int> OnRetry()
+        private Action<Exception, TimeSpan, int> OnRetry()
         {
-            return (exception, retryCount) =>
+            return (exception, timespan, retryCount) =>
             {
                 Console.WriteLine($"{retryCount} times retry");
             };

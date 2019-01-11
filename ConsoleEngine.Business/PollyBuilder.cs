@@ -13,10 +13,13 @@ namespace ConsoleEngine.Business
         private Policy _breakerPolicy;
         private Policy _timeoutPolicy;
 
-        public IPolicyFacade Build(Action action)
+        public PollyBuilder()
         {
             _fallback = Policy.Handle<Exception>().Fallback(() => { });
+        }
 
+        public IPolicyFacade Build()
+        {
             AddPolicy(_retryPolicy);
             AddPolicy(_breakerPolicy);
             AddPolicy(_timeoutPolicy);
@@ -46,9 +49,13 @@ namespace ConsoleEngine.Business
             return this;
         }
 
-        public IPolicyBuilder SetRetryPolicy(int retryCount, Action<Exception, int> onRetry)
+        public IPolicyBuilder SetRetryPolicy(int retryCount, int sleepMilliseconds, Action<Exception, TimeSpan, int> onRetry)
         {
-            _retryPolicy = Policy.Handle<Exception>().Retry(retryCount, onRetry);
+            _retryPolicy = Policy.Handle<Exception>()
+                .WaitAndRetry(retryCount, 
+                retryAttempt => TimeSpan.FromMilliseconds(sleepMilliseconds),
+                onRetry: (exception, timespan, retryTime, context) =>
+                { onRetry(exception, timespan, retryTime); });
             return this;
         }
 
