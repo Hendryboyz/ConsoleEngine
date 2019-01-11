@@ -6,16 +6,16 @@ namespace ConsoleEngine.Business
 {
     public class PollyPolicyFacade : IPolicyFacade
     {
-        private Policy _fallback;
+        private Policy _policy;
 
-        public PollyPolicyFacade(Policy fallback)
+        public PollyPolicyFacade(Policy policy)
         {
-            _fallback = fallback;
+            _policy = policy;
         }
 
         public void Execute(Action action)
         {
-            _fallback.Execute(action);
+            _policy.Execute(action);
         }
     }
 }

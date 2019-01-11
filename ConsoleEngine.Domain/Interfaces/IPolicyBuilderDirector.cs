@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ConsoleEngine.Domain.Interfaces
+﻿namespace ConsoleEngine.Domain.Interfaces
 {
     public interface IPolicyBuilderDirector
     {

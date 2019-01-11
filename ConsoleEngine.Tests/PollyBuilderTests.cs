@@ -10,7 +10,7 @@ namespace Tests
     [TestFixture]
     public class PollyBuilderTests
     {
-        private IPolicyBuilder pollyBuilder;
+        private PollyBuilder pollyBuilder;
         private StringWriter outputWriter;
 
         [SetUp]
@@ -39,7 +39,8 @@ namespace Tests
         [Test]
         public void GivenFallbackAndAction_WhenBuildAndExecute_ThenDoneInOutput()
         {
-            pollyBuilder.SetFallbackPolicy(() => {
+            pollyBuilder.SetFallbackPolicy(() =>
+            {
                 Console.WriteLine("Some happened");
             });
 
@@ -53,7 +54,8 @@ namespace Tests
         [Test]
         public void GivenFallbackAndExceptionAction_WhenBuildAndExecute_ThenFallbackMessageInOutput()
         {
-            pollyBuilder.SetFallbackPolicy(() => {
+            pollyBuilder.SetFallbackPolicy(() =>
+            {
                 Console.WriteLine("Some happened");
             });
 
@@ -129,16 +131,17 @@ namespace Tests
         }
 
         [Test]
-        public void GivenAllPolicyAndOutput_WhenBuild_ThenCheckLog()
+        public void GivenAllPolicyAndOutput_WhenBuildAndExecute_ThenAllMessageInOutput()
         {
             IPolicyFacade pollyFacade = pollyBuilder
                 .SetRetryPolicy(1, 1, OnRetry())
                 .SetCircuitBreakerPolicy(2, TimeSpan.FromMilliseconds(100), OnBreak(), OnReset())
                 .SetTimeoutPolicy(50, onTimeout: OnTimeout()).Build();
 
-            pollyFacade.Execute(() => { 
-                    Console.WriteLine("Do");
-                    while (true) { }
+            pollyFacade.Execute(() =>
+            {
+                Console.WriteLine("Do");
+                while (true) { }
             });
 
             StringAssert.Contains("Do", outputWriter.ToString());
