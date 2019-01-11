@@ -68,7 +68,7 @@ namespace Tests
         public void GivenTimeoutAndAction_WhenBuildAndExecute_ThenTimeoutMessageInOutput()
         {
             IPolicyFacade pollyFacade = pollyBuilder
-               .SetTimeoutPolicy(1, onTimeout: OnTimeout()).Build();
+               .SetTimeoutPolicy(50, onTimeout: OnTimeout()).Build();
 
             pollyFacade.Execute(() => { while (true) { } });
 
@@ -106,8 +106,8 @@ namespace Tests
         public void GivenBreakerRetryAndExceptionAction_WhenBuildAndExecute_ThenBreakerRetryMessageInOutput()
         {
             IPolicyFacade pollyFacade = pollyBuilder
-                .SetCircuitBreakerPolicy(3, TimeSpan.FromMilliseconds(1000), OnBreak(), OnReset())
-                .SetRetryPolicy(2, 1, OnRetry()).Build();
+                .SetRetryPolicy(1, 1, OnRetry())
+                .SetCircuitBreakerPolicy(2, TimeSpan.FromMilliseconds(100), OnBreak(), OnReset()).Build();
 
             pollyFacade.Execute(() => { throw new Exception(); });
 
@@ -132,9 +132,9 @@ namespace Tests
         public void GivenAllPolicyAndOutput_WhenBuild_ThenCheckLog()
         {
             IPolicyFacade pollyFacade = pollyBuilder
-                .SetRetryPolicy(2, 1, OnRetry())
-                .SetCircuitBreakerPolicy(3, TimeSpan.FromMilliseconds(1000), OnBreak(), OnReset())
-                .SetTimeoutPolicy(1, onTimeout: OnTimeout()).Build();
+                .SetRetryPolicy(1, 1, OnRetry())
+                .SetCircuitBreakerPolicy(2, TimeSpan.FromMilliseconds(100), OnBreak(), OnReset())
+                .SetTimeoutPolicy(50, onTimeout: OnTimeout()).Build();
 
             pollyFacade.Execute(() => { 
                     Console.WriteLine("Do");

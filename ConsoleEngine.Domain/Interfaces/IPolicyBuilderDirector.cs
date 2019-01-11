@@ -4,7 +4,7 @@ namespace ConsoleEngine.Domain.Interfaces
 {
     public interface IPolicyBuilderDirector
     {
-        IPolicyBuilder Builder { get; }
+        IPolicyBuilder _builder { get; }
 
         IPolicyFacade Construct();
     }

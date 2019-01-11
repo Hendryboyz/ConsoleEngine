@@ -6,19 +6,18 @@ namespace ConsoleEngine.Business
 {
     public class PolicyBuilderDirector : IPolicyBuilderDirector
     {
-        public IPolicyBuilder Builder { get; private set; }
+        public IPolicyBuilder _builder { get; private set; }
 
-        public PolicyBuilderDirector()
+        public PolicyBuilderDirector(IPolicyBuilder policyBuilder)
         {
-
+            _builder = policyBuilder;
         }
 
         public IPolicyFacade Construct()
         {
-            return Builder
-               .SetRetryPolicy(2, 1, OnRetry())
-               .SetTimeoutPolicy(1, onTimeout: OnTimeout())
-               .Build();
+            _builder.SetRetryPolicy(2, 1, OnRetry());
+            _builder.SetTimeoutPolicy(1, onTimeout: OnTimeout());
+            return _builder.Build();
         }
 
 

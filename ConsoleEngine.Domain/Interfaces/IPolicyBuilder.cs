@@ -7,7 +7,7 @@ namespace ConsoleEngine.Domain.Interfaces
     {
         IPolicyFacade Build();
 
-        IPolicyBuilder SetTimeoutPolicy(int seconds, Action<TimeSpan, Task, Exception> onTimeout);
+        IPolicyBuilder SetTimeoutPolicy(int milliseconds, Action<TimeSpan, Task, Exception> onTimeout);
 
         IPolicyBuilder SetFallbackPolicy(Action fallbackAction);
 

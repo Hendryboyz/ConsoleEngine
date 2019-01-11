@@ -59,9 +59,9 @@ namespace ConsoleEngine.Business
             return this;
         }
 
-        public IPolicyBuilder SetTimeoutPolicy(int seconds, Action<TimeSpan, Task, Exception> onTimeout)
+        public IPolicyBuilder SetTimeoutPolicy(int milliseconds, Action<TimeSpan, Task, Exception> onTimeout)
         {
-            _timeoutPolicy = Policy.Timeout(seconds, TimeoutStrategy.Pessimistic, 
+            _timeoutPolicy = Policy.Timeout(TimeSpan.FromMilliseconds(milliseconds), TimeoutStrategy.Pessimistic, 
                 onTimeout: (context, timespan, task, exception) => onTimeout(timespan, task, exception));
             return this;
         }
